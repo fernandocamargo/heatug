@@ -1,7 +1,36 @@
-import { createMacro } from 'babel-plugin-macros';
+const isEqual = require('lodash/isEqual');
+const { createMacro } = require('babel-plugin-macros');
 
-console.log({ createMacro });
+function macro({
+  babel: {
+    types: { importDeclaration, stringLiteral },
+  },
+  state: {
+    file: { path: program },
+  },
+  source,
+}) {
+  program.traverse({
+    ImportDeclaration(path) {
+      const {
+        node: {
+          source: { value },
+          specifiers,
+        },
+        parentPath,
+      } = path;
+      const replace = () => {
+        parentPath.unshiftContainer(
+          'body',
+          importDeclaration(specifiers, stringLiteral('react'))
+        );
+        path.remove();
+      };
+      const itself = isEqual(value, source);
 
-export function macro() {}
+      return itself && replace();
+    },
+  });
+}
 
-export default createMacro(macro);
+module.exports = createMacro(macro);

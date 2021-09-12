@@ -1,13 +1,12 @@
 {
   "name": "heatug",
   "version": "1.0.0",
-  "exports": {
-    "./*": "./src/*/*.js"
-  },
+  "main": "./src/index.js",
   "repository": "git@github.com:fernandocamargo/heatug.git",
   "author": "Fernando Camargo <camargodelbuono@gmail.com>",
   "dependencies": {
     "@babel/types": "^7.15.6",
-    "babel-plugin-macros": "^3.1.0"
+    "babel-plugin-macros": "^3.1.0",
+    "lodash": "^4.17.21"
   }
 }
