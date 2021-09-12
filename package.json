@@ -5,6 +5,7 @@
   "repository": "git@github.com:fernandocamargo/heatug.git",
   "author": "Fernando Camargo <camargodelbuono@gmail.com>",
   "dependencies": {
+    "@components": "link:./src/components",
     "@babel/types": "^7.15.6",
     "babel-plugin-macros": "^3.1.0",
     "lodash": "^4.17.21"

@@ -3,14 +3,31 @@ const { createMacro } = require('babel-plugin-macros');
 
 function macro({
   babel: {
-    types: { importDeclaration, stringLiteral },
+    types: {
+      arrowFunctionExpression,
+      callExpression,
+      exportDefaultDeclaration,
+      exportNamedDeclaration,
+      identifier,
+      importDeclaration,
+      importSpecifier,
+      jSXClosingElement,
+      jSXAttribute,
+      jSXElement,
+      jSXExpressionContainer,
+      jSXIdentifier,
+      jSXOpeningElement,
+      stringLiteral,
+      variableDeclaration,
+      variableDeclarator,
+    },
   },
   state: {
     file: { path: program },
   },
   source,
 }) {
-  program.traverse({
+  return program.traverse({
     ImportDeclaration(path) {
       const {
         node: {
@@ -20,15 +37,62 @@ function macro({
         parentPath,
       } = path;
       const replace = () => {
-        parentPath.unshiftContainer(
-          'body',
-          importDeclaration(specifiers, stringLiteral('react'))
-        );
-        path.remove();
+        parentPath.unshiftContainer('body', [
+          importDeclaration(
+            specifiers.concat(
+              importSpecifier(
+                identifier('forwardRef123'),
+                identifier('forwardRef')
+              )
+            ),
+            stringLiteral('react')
+          ),
+          importDeclaration(
+            [importSpecifier(identifier('Root'), identifier('Root'))],
+            stringLiteral('@components')
+          ),
+        ]);
       };
-      const itself = isEqual(value, source);
+      const replaceable = isEqual(value, source);
 
-      return itself && replace();
+      return void (replaceable && replace());
+    },
+    ExportDefaultDeclaration(path) {
+      const {
+        node: { declaration: render },
+        parentPath,
+      } = path;
+      const replace = () => {
+        parentPath.unshiftContainer('body', [
+          exportNamedDeclaration(
+            variableDeclaration('const', [
+              variableDeclarator(identifier('Render'), render),
+            ])
+          ),
+        ]);
+        path.replaceWith(
+          exportDefaultDeclaration(
+            callExpression(identifier('forwardRef123'), [
+              arrowFunctionExpression(
+                [identifier('props'), identifier('ref')],
+                jSXElement(
+                  jSXOpeningElement(jSXIdentifier('Render'), [
+                    jSXAttribute(
+                      jSXIdentifier('ref'),
+                      jSXExpressionContainer(identifier('ref'))
+                    ),
+                  ]),
+                  jSXClosingElement(jSXIdentifier('Render')),
+                  []
+                )
+              ),
+            ])
+          )
+        );
+        path.skip();
+      };
+
+      return void replace();
     },
   });
 }
