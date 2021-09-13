@@ -1,5 +1,6 @@
 const isEqual = require('lodash/isEqual');
 const { createMacro } = require('babel-plugin-macros');
+const { Hash } = require('./helpers');
 
 function macro({
   babel: {
@@ -24,9 +25,12 @@ function macro({
   },
   state: {
     file: { path: program },
+    filename,
   },
   source,
 }) {
+  const hash = new Hash(filename);
+
   return program.traverse({
     ImportDeclaration(path) {
       const {
@@ -41,14 +45,14 @@ function macro({
           importDeclaration(
             specifiers.concat(
               importSpecifier(
-                identifier('forwardRef123'),
+                identifier(hash.forwardRef),
                 identifier('forwardRef')
               )
             ),
             stringLiteral('react')
           ),
           importDeclaration(
-            [importSpecifier(identifier('Root123'), identifier('Root'))],
+            [importSpecifier(identifier(hash.Root), identifier('Root'))],
             stringLiteral('heatug/dist/components')
           ),
         ]);
@@ -72,11 +76,11 @@ function macro({
         ]);
         path.replaceWith(
           exportDefaultDeclaration(
-            callExpression(identifier('forwardRef123'), [
+            callExpression(identifier(hash.forwardRef), [
               arrowFunctionExpression(
                 [identifier('props'), identifier('ref')],
                 jSXElement(
-                  jSXOpeningElement(jSXIdentifier('Root123'), [
+                  jSXOpeningElement(jSXIdentifier(hash.Root), [
                     jSXAttribute(
                       jSXIdentifier('props'),
                       jSXExpressionContainer(identifier('props'))
@@ -90,7 +94,7 @@ function macro({
                       jSXExpressionContainer(identifier('render'))
                     ),
                   ]),
-                  jSXClosingElement(jSXIdentifier('Root123')),
+                  jSXClosingElement(jSXIdentifier(hash.Root)),
                   []
                 )
               ),
