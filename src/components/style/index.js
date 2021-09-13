@@ -1,4 +1,4 @@
-const statics = require('./statics');
-const { default: render } = require('./render');
+import * as statics from './statics';
+import render from './render';
 
-module.exports = Object.assign(render, statics);
+export default Object.assign(render, statics);

@@ -1,7 +1,5 @@
-const defaultProps = {};
+export const defaultProps = {};
 
-const displayName = 'Root';
+export const displayName = 'Root';
 
-const propTypes = {};
-
-module.exports = { defaultProps, displayName, propTypes };
+export const propTypes = {};

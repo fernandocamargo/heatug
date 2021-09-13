@@ -1,7 +1,7 @@
-const property = require('lodash/property');
-const { createGlobalStyle } = require('styled-components');
+import property from 'lodash/property';
+import { createGlobalStyle } from 'styled-components';
 
-module.exports = createGlobalStyle`
+export default createGlobalStyle`
   html {
     background-color: #fff;
     opacity: 1;

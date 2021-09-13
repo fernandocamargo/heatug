@@ -27,6 +27,8 @@ function macro({
   },
   source,
 }) {
+  console.clear();
+
   return program.traverse({
     ImportDeclaration(path) {
       const {
@@ -48,8 +50,8 @@ function macro({
             stringLiteral('react')
           ),
           importDeclaration(
-            [importSpecifier(identifier('Root'), identifier('Root'))],
-            stringLiteral('@components')
+            [importSpecifier(identifier('Root123'), identifier('Root'))],
+            stringLiteral('heatug/dist/components')
           ),
         ]);
       };
@@ -66,7 +68,7 @@ function macro({
         parentPath.unshiftContainer('body', [
           exportNamedDeclaration(
             variableDeclaration('const', [
-              variableDeclarator(identifier('Render'), render),
+              variableDeclarator(identifier('render'), render),
             ])
           ),
         ]);
@@ -76,13 +78,21 @@ function macro({
               arrowFunctionExpression(
                 [identifier('props'), identifier('ref')],
                 jSXElement(
-                  jSXOpeningElement(jSXIdentifier('Render'), [
+                  jSXOpeningElement(jSXIdentifier('Root123'), [
+                    jSXAttribute(
+                      jSXIdentifier('props'),
+                      jSXExpressionContainer(identifier('props'))
+                    ),
                     jSXAttribute(
                       jSXIdentifier('ref'),
                       jSXExpressionContainer(identifier('ref'))
                     ),
+                    jSXAttribute(
+                      jSXIdentifier('render'),
+                      jSXExpressionContainer(identifier('render'))
+                    ),
                   ]),
-                  jSXClosingElement(jSXIdentifier('Render')),
+                  jSXClosingElement(jSXIdentifier('Root123')),
                   []
                 )
               ),

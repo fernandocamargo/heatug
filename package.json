@@ -5,9 +5,32 @@
   "repository": "git@github.com:fernandocamargo/heatug.git",
   "author": "Fernando Camargo <camargodelbuono@gmail.com>",
   "dependencies": {
-    "@components": "link:./src/components",
     "@babel/types": "^7.15.6",
     "babel-plugin-macros": "^3.1.0",
     "lodash": "^4.17.21"
+  },
+  "peerDependencies": {
+    "@emotion/react": "^11.4.1",
+    "@emotion/styled": "^11.3.0",
+    "@mui/icons-material": "^5.0.0-rc.0",
+    "@mui/lab": "^5.0.0-alpha.45",
+    "@mui/material": "^5.0.0-rc.0",
+    "@mui/styles": "^5.0.0-rc.0",
+    "prop-types": "^15.7.2",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "styled-components": "^5.3.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.15.4",
+    "@babel/core": "^7.15.5",
+    "@babel/preset-env": "^7.15.6",
+    "@babel/preset-react": "^7.14.5",
+    "babel-plugin-module-resolver": "^4.1.0",
+    "nodemon": "^2.0.12"
+  },
+  "scripts": {
+    "dev": "nodemon --watch 'src/{components,hooks,themes}/**/*.*' --exec 'yarn compile'",
+    "compile": "npx babel src --out-dir dist --ignore 'src/macros' --source-maps"
   }
 }

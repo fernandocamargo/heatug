@@ -1,4 +1,2 @@
-const Root = require('./root');
-const Style = require('./style');
-
-module.exports = { Root, Style };
+export { default as Root } from './root';
+export { default as Style } from './style';

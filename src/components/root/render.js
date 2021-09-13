@@ -1,11 +1,12 @@
-const React = require('heatug/src/macros/core/root/macro');
-const { ThemeProvider: Theming } = require('@mui/material/styles');
-const theme = require('themes/default');
-const { Style } = require('components');
+import React, { forwardRef } from 'react';
+import { ThemeProvider as Theming } from '@mui/material/styles';
 
-module.exports = ({ children }) => (
+import theme from 'themes/default';
+import { Style } from 'components';
+
+export default forwardRef(({ render: Render, props }, ref) => (
   <Theming theme={theme}>
     <Style />
-    {children}
+    <Render {...props} ref={ref} />
   </Theming>
-);
+));
