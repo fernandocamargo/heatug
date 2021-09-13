@@ -6,9 +6,9 @@ import storage from 'redux-persist/lib/storage';
 import { name } from 'pckg';
 import * as reducers from 'actions/reducers';
 
-const compose = composeWithDevTools({ name });
+export const compose = composeWithDevTools({ name });
 
-const persistency = persistReducer(
+export const persistency = persistReducer(
   { whitelist: ['profile', 'settings'], key: name, storage },
   combineReducers(reducers)
 );
