@@ -8,8 +8,13 @@
     "@babel/types": "^7.15.6",
     "babel-plugin-macros": "^3.1.0",
     "history": "^5.0.1",
+    "immutability-helper": "^3.1.1",
     "lodash": "^4.17.21",
-    "react-router-dom": "^6.0.0-beta.4"
+    "react-redux": "^7.2.5",
+    "react-router-dom": "^6.0.0-beta.4",
+    "redux": "^4.1.1",
+    "redux-devtools-extension": "^2.13.9",
+    "redux-persist": "^6.0.0"
   },
   "peerDependencies": {
     "@emotion/react": "^11.4.1",
@@ -32,7 +37,7 @@
     "nodemon": "^2.0.12"
   },
   "scripts": {
-    "dev": "nodemon --watch 'src/{components,hooks,themes}/**/*.*' --exec 'yarn compile'",
+    "dev": "nodemon --watch 'src/*!(macros)/**/*.*' --exec 'yarn compile'",
     "compile": "npx babel src --out-dir dist --ignore 'src/macros' --source-maps"
   }
 }

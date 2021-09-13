@@ -27,8 +27,6 @@ function macro({
   },
   source,
 }) {
-  console.clear();
-
   return program.traverse({
     ImportDeclaration(path) {
       const {
