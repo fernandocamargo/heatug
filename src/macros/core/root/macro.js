@@ -1,10 +1,19 @@
+const { dirname, join, relative } = require('path');
+const { lstatSync } = require('fs');
 const isEqual = require('lodash/isEqual');
+const { sync: find } = require('glob');
+const update = require('immutability-helper');
 const { createMacro } = require('babel-plugin-macros');
-const { Hash } = require('./helpers');
+const { Meta } = require('./helpers');
+
+const PATTERN =
+  '*{\\[*\\]/,{skins/**/index,(hooks|i18n|index|routing|statics|style)}.js}';
 
 function macro({
   babel: {
     types: {
+      addComment,
+      arrayExpression,
       arrowFunctionExpression,
       callExpression,
       exportDefaultDeclaration,
@@ -18,9 +27,12 @@ function macro({
       jSXExpressionContainer,
       jSXIdentifier,
       jSXOpeningElement,
+      objectExpression,
+      objectProperty,
       stringLiteral,
       variableDeclaration,
       variableDeclarator,
+      ...types
     },
   },
   state: {
@@ -29,7 +41,48 @@ function macro({
   },
   source,
 }) {
-  const hash = new Hash(filename);
+  const { identifiers } = new Meta({ filename });
+  const extract = (path) => {
+    const cwd = dirname(path);
+    const found = find(PATTERN, { nocase: true, realpath: true, cwd });
+    const check = (stack, file) => {
+      const itself = isEqual(file, filename);
+      const checkable = lstatSync(file).isDirectory();
+      const chunk = join(cwd, relative(cwd, file));
+
+      return checkable
+        ? stack
+        : update(stack, {
+            dependencies: {
+              $push: [
+                objectExpression([
+                  objectProperty(
+                    identifier('load'),
+                    arrowFunctionExpression(
+                      [],
+                      callExpression(types.import(), [
+                        addComment(
+                          stringLiteral(chunk),
+                          'leading',
+                          `webpackChunkName: "${chunk}"`
+                        ),
+                      ])
+                    )
+                  ),
+                ]),
+              ],
+            },
+          });
+    };
+
+    return found.reduce(check, {
+      stats: { routing: {}, skins: {} },
+      dependencies: [],
+    });
+  };
+  const { dependencies, stats } = extract(filename);
+
+  console.log({ dependencies, stats });
 
   return program.traverse({
     ImportDeclaration(path) {
@@ -45,14 +98,14 @@ function macro({
           importDeclaration(
             specifiers.concat(
               importSpecifier(
-                identifier(hash.forwardRef),
+                identifier(identifiers.forwardRef),
                 identifier('forwardRef')
               )
             ),
             stringLiteral('react')
           ),
           importDeclaration(
-            [importSpecifier(identifier(hash.Root), identifier('Root'))],
+            [importSpecifier(identifier(identifiers.Root), identifier('Root'))],
             stringLiteral('heatug/dist/components')
           ),
         ]);
@@ -76,11 +129,15 @@ function macro({
         ]);
         path.replaceWith(
           exportDefaultDeclaration(
-            callExpression(identifier(hash.forwardRef), [
+            callExpression(identifier(identifiers.forwardRef), [
               arrowFunctionExpression(
                 [identifier('props'), identifier('ref')],
                 jSXElement(
-                  jSXOpeningElement(jSXIdentifier(hash.Root), [
+                  jSXOpeningElement(jSXIdentifier(identifiers.Root), [
+                    jSXAttribute(
+                      jSXIdentifier('dependencies'),
+                      jSXExpressionContainer(arrayExpression(dependencies))
+                    ),
                     jSXAttribute(
                       jSXIdentifier('props'),
                       jSXExpressionContainer(identifier('props'))
@@ -94,7 +151,7 @@ function macro({
                       jSXExpressionContainer(identifier('render'))
                     ),
                   ]),
-                  jSXClosingElement(jSXIdentifier(hash.Root)),
+                  jSXClosingElement(jSXIdentifier(identifiers.Root)),
                   []
                 )
               ),

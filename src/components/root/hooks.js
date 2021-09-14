@@ -1,16 +1,17 @@
 import get from 'lodash/get';
+import invokeMap from 'lodash/invokeMap';
 import { createElement, lazy, useCallback, useMemo } from 'react';
 
 import store, { persistor } from 'store';
 
-export default ({ props, render }) => {
+export const delay = (resolve) => window.setTimeout(resolve, 500);
+
+export default ({ dependencies, props, render }) => {
   const locale = useMemo(() => get(store.getState(), ['settings', 'locale']));
+  const wrap = useCallback(() => ({ default: render }), [render]);
   const load = useCallback(
-    () =>
-      new Promise((resolve) => window.setTimeout(resolve, 5000)).then(() => ({
-        default: render,
-      })),
-    [render]
+    () => Promise.all(invokeMap(dependencies, 'load')).then(wrap),
+    [wrap]
   );
   const Render = useCallback(() => createElement(lazy(load)), [load]);
 
