@@ -1,15 +1,18 @@
-const { dirname, join, relative } = require('path');
-const { lstatSync } = require('fs');
-const isEqual = require('lodash/isEqual');
-const { sync: find } = require('glob');
-const update = require('immutability-helper');
-const { createMacro } = require('babel-plugin-macros');
-const { Meta } = require('./helpers');
+import { join, parse, relative } from 'path';
+import { lstatSync } from 'fs';
+import isEqual from 'lodash/isEqual';
+import { sync as find } from 'glob';
+import update from 'immutability-helper';
+import { createMacro } from 'babel-plugin-macros';
 
-const PATTERN =
+import { absolute } from 'helpers/path';
+
+import { Meta } from './helpers';
+
+export const PATTERN =
   '*{\\[*\\]/,{skins/**/index,(hooks|i18n|index|routing|statics|style)}.js}';
 
-function macro({
+export function macro({
   babel: {
     types: {
       addComment,
@@ -42,47 +45,40 @@ function macro({
   source,
 }) {
   const { identifiers } = new Meta({ filename });
+  const load = (path) =>
+    arrowFunctionExpression(
+      [],
+      callExpression(types.import(), [
+        addComment(
+          stringLiteral(path),
+          'leading',
+          `webpackChunkName: "${path}"`
+        ),
+      ])
+    );
   const extract = (path) => {
-    const cwd = dirname(path);
+    const { dir: cwd } = parse(path);
     const found = find(PATTERN, { nocase: true, realpath: true, cwd });
     const check = (stack, file) => {
+      const namespace = absolute(file);
       const itself = isEqual(file, filename);
       const checkable = lstatSync(file).isDirectory();
       const chunk = join(cwd, relative(cwd, file));
+      const transform = () => {
+        switch (true) {
+          default:
+            return {};
+        }
+      };
 
-      return checkable
-        ? stack
-        : update(stack, {
-            dependencies: {
-              $push: [
-                objectExpression([
-                  objectProperty(
-                    identifier('load'),
-                    arrowFunctionExpression(
-                      [],
-                      callExpression(types.import(), [
-                        addComment(
-                          stringLiteral(chunk),
-                          'leading',
-                          `webpackChunkName: "${chunk}"`
-                        ),
-                      ])
-                    )
-                  ),
-                ]),
-              ],
-            },
-          });
+      console.log({ namespace });
+
+      return update(stack, transform());
     };
 
-    return found.reduce(check, {
-      stats: { routing: {}, skins: {} },
-      dependencies: [],
-    });
+    return found.reduce(check, { routing: {}, skins: {} });
   };
-  const { dependencies, stats } = extract(filename);
-
-  console.log({ dependencies, stats });
+  const dependencies = extract(filename);
 
   return program.traverse({
     ImportDeclaration(path) {
@@ -136,7 +132,7 @@ function macro({
                   jSXOpeningElement(jSXIdentifier(identifiers.Root), [
                     jSXAttribute(
                       jSXIdentifier('dependencies'),
-                      jSXExpressionContainer(arrayExpression(dependencies))
+                      jSXExpressionContainer(arrayExpression([]))
                     ),
                     jSXAttribute(
                       jSXIdentifier('props'),
@@ -166,4 +162,4 @@ function macro({
   });
 }
 
-module.exports = createMacro(macro);
+export default createMacro(macro);

@@ -1,6 +1,6 @@
-const { createHash } = require('crypto');
+import { createHash } from 'crypto';
 
-class Meta {
+export class Meta {
   constructor({ filename }) {
     const hash = '_'.concat(createHash('md5').update(filename).digest('hex'));
 
@@ -10,5 +10,3 @@ class Meta {
     };
   }
 }
-
-module.exports = { Meta };
