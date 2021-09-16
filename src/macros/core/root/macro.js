@@ -1,6 +1,8 @@
-import { join, parse, relative } from 'path';
+import { join, parse } from 'path';
 import { lstatSync } from 'fs';
 import isEqual from 'lodash/isEqual';
+import matches from 'lodash/matches';
+import match from 'minimatch';
 import { sync as find } from 'glob';
 import update from 'immutability-helper';
 import { createMacro } from 'babel-plugin-macros';
@@ -8,9 +10,6 @@ import { createMacro } from 'babel-plugin-macros';
 import { absolute } from 'helpers/path';
 
 import { Meta } from './helpers';
-
-export const PATTERN =
-  '*{\\[*\\]/,{skins/**/index,(hooks|i18n|index|routing|statics|style)}.js}';
 
 export function macro({
   babel: {
@@ -44,41 +43,69 @@ export function macro({
   },
   source,
 }) {
+  console.clear();
+
   const { identifiers } = new Meta({ filename });
-  const load = (path) =>
+  const load = ({ file, webpackChunkName }) =>
     arrowFunctionExpression(
       [],
       callExpression(types.import(), [
         addComment(
-          stringLiteral(path),
+          stringLiteral(file),
           'leading',
-          `webpackChunkName: "${path}"`
+          `webpackChunkName: "${webpackChunkName}"`
         ),
       ])
     );
-  const extract = (path) => {
-    const { dir: cwd } = parse(path);
-    const found = find(PATTERN, { nocase: true, realpath: true, cwd });
-    const check = (stack, file) => {
-      const namespace = absolute(file);
-      const itself = isEqual(file, filename);
-      const checkable = lstatSync(file).isDirectory();
-      const chunk = join(cwd, relative(cwd, file));
+  const extract = ({
+    input = { routing: { routes: [] }, skins: {} },
+    directory,
+    file,
+  }) => {
+    const cwd = file ? parse(file).dir : directory;
+    const found = find(
+      [
+        '*{\\[*\\]/,',
+        file ? '{skins/**/index,(hooks|i18n|routing|statics|style)}' : 'index',
+        '.js}',
+      ].join(''),
+      { nocase: true, realpath: true, cwd }
+    );
+    const root = !!directory && found.find(matches(join(cwd, 'index.js')));
+
+    console.log(JSON.stringify({ file, directory, found, root }, null, 2));
+
+    const check = (output, item) => {
+      const webpackChunkName = absolute(item);
+      const { dir, name } = parse(item);
+      const itself = isEqual(item, filename);
       const transform = () => {
         switch (true) {
+          case match(item, '**/skins/*/index.js'):
+            return {
+              skins: { [parse(dir).name]: { $set: { webpackChunkName } } },
+            };
+          case isEqual(name.toLowerCase(), 'style'):
+            return { skins: { default: { $set: { webpackChunkName } } } };
+          case isEqual(name.toLowerCase(), 'index') && !itself:
+            return { routing: { routes: { $push: [{ webpackChunkName }] } } };
+          case ['hooks', 'i18n', 'statics'].includes(name):
+            return { [name]: { $set: { webpackChunkName } } };
+          case lstatSync(item).isDirectory():
+            return extract({ directory: item, input: output });
           default:
             return {};
         }
       };
 
-      console.log({ namespace });
-
-      return update(stack, transform());
+      return update(output, transform());
     };
 
-    return found.reduce(check, { routing: {}, skins: {} });
+    return found.reduce(check, input);
   };
-  const dependencies = extract(filename);
+  const dependencies = extract({ file: filename });
+
+  console.log({ dependencies });
 
   return program.traverse({
     ImportDeclaration(path) {

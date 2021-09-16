@@ -2,10 +2,8 @@ import { relative, resolve } from 'path';
 import { cwd } from 'process';
 import get from 'lodash/get';
 
-import { plugins } from 'babelrc';
+import * as babel from 'babelrc';
 
-export default (path) => {
-  const base = get(plugins, [0, 1, 'root', 0]);
+import { ROOT } from './constants';
 
-  return relative(resolve(cwd(), base), path);
-};
+export default (path) => relative(resolve(cwd(), get(babel, ROOT)), path);
